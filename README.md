@@ -1,52 +1,33 @@
-# swarm-jobs-multipass
-Docker Swarm Job support is almost here. Let's test it out.
+# Check out Docker 20.10.0-Beta using Multipass
 
-Support for running "one-off" jobs in Docker Swarm is one of the most long awaited features in Swarm. The code will be included in Docker 20.03.0 but is available now for testing.  Using [Multipass](https://multipass.run) you can setup a 3 node Docker Swarm in a few minutes and start playing about with Swarm Jobs.
+Docker 20.10.0 Beta is available now! 
 
-Disclaimer: These notes are kinda rough and it is late, so apologies.  I'll clean it up later.
+Take it for a spin using Multipass and kick the tyres on the biggest Docker release this year. There is a ton of good stuff in 20.10.0 and the Changelog is [here](https://github.com/docker/docker-ce/blob/6d281252d3fbbff836e94caeb37e104830bd700f/CHANGELOG.md).
+
+The [install_docker.yml](./install_docker.yml) Cloud Init file will install v20.10.0-Beta.  If you just want to start a single VM and try out the changes in 20.10.0 then run :
+```
+multipass launch --mem 1G --cpus 1 --disk 10G --cloud-init install_docker.yml --name vm-1 20.04
+
+multipass shell vm-1
+```
+
+The rest of this tutorial revolves around Swarm Jobs.
+
+Using [Multipass](https://multipass.run) you can setup a 3 node Docker Swarm in a few minutes and start playing about with Swarm Jobs.
 
 ## Install Multipass
 
 Instructions can be found [here](https://multipass.run).
 
-## Download a Recent Docker Snapshot
-
-Snapshots are available [here](https://github.com/AkihiroSuda/moby-snapshot/releases)
-
-Since we are planning to run our Swarm cluster on Ubuntu VMs let's download the .deb [packages](https://github.com/AkihiroSuda/moby-snapshot/releases/download/snapshot-20200818/moby-snapshot-ubuntu-focal-x86_64-deb.tbz) and extract the .tbz bundle using : tar -xvf moby-snapshot-ubuntu-focal-x86_64-deb.tbz
-
 ## Start 3 VMs
 
-```shell
-multipass launch --mem 1G --cpus 1 --disk 10G --name swarm-node-1 20.04
-multipass launch --mem 1G --cpus 1 --disk 10G --name swarm-node-2 20.04
-multipass launch --mem 1G --cpus 1 --disk 10G --name swarm-node-3 20.04
-
-Mount in the HOME directory from the host to the VM :
-
-multipass mount $HOME swarm-node-1
-multipass mount $HOME swarm-node-2
-multipass mount $HOME swarm-node-3
-
-On MacOS the above command will mount /Users/<username> to /Users/<username> inside each VM.
-
-```
-
-## Install and Start Docker
-
-Login to each VM, install the Docker .deb packages and start docker.
+The VMs may take a few minutes to start up and install Docker.
 
 ```shell
-multipass shell swarm-node-1
 
-cd /Users/<username>
-sudo apt-get install ./*.deb
-sudo dockerd
+for node in 1 2 3; do multipass launch --mem 1G --cpus 1 --disk 10G --cloud-init install_docker.yml --name swarm-node-$node 20.04 & done
+
 ```
-
-Repeat the above steps on swarm-node-2 and swarm-node-3.
-
-At this point we can leave the terminals as they are. Docker is running on each.
 
 ## Setup the Swarm Cluster
 
@@ -161,4 +142,11 @@ nbzop0dmbjwp        ping-google.7                           bash:latest         
 ssdv982lqfqd        ping-google.8                           bash:latest         swarm-node-2        Complete            Complete 9 seconds ago                        
 qqilntkr16rm        ping-google.9                           bash:latest         swarm-node-1        Complete            Complete 9 seconds ago                        
 xcuinnwou2fb        ping-google.l07dxnibdqm01ln861b38toko   bash:latest         swarm-node-1        Complete            Complete 17 seconds ago    
+```
+
+# Cleanup
+
+To remove the VMs run :
+```
+for node in 1 2 3; do multipass delete swarm-node-$node --purge ; done
 ```
